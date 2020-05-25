@@ -1,4 +1,6 @@
-class Reader:
+from monad import Monad
+
+class Reader(Monad):
     '''
     Reader e a
     '''

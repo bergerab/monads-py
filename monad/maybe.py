@@ -1,4 +1,6 @@
-class Maybe:
+from monad import Monad
+
+class Maybe(Monad):
     '''
     Maybe a
     '''

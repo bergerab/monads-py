@@ -1,6 +1,51 @@
 * Monads
-An implementation of several monads in Python. Below is an overview of
-each and their usage.
+An implementation of several monads in Python. 
+
+They aren't very useful because there's no do-notation so ~lambda~ and
+~bind~ must be used instead. Python's strict evaluation also makes it
+difficult to write a monad without it running immediately. For
+example, to make a IO action that takes input and adds an exclaimation
+point, you can't assign it to a variable.
+
+#+BEGIN_SRC python
+  io_yell_input = io_input() \
+      .bind(lambda x: IO.lift(x + '!')).run()
+#+END_SRC
+
+This happens even if the ~run()~ call is removed -- if that is missing it will run
+each action). For the IO monad this is because bind is
+~f(self.run()))~. Meaning the last in a chain of ~bind~ would never get
+~run()~ called. But the ~bind~ chain would run, because Python eagerly evaluates.
+
+The code above will ask for input immediately, instead of creating an
+IO action that when run asks for input.
+
+You have to wrap it in a function.
+
+#+BEGIN_SRC python
+  def io_yell_input():
+      return io_input() \
+	  .bind(lambda x: IO.lift(x + '!')).run()
+#+END_SRC
+
+Another issue is the lack of currying of functions (as a
+default). That makes Applicative Functors less useful. Here is a basic
+example of what you can do in Haskell:
+
+#+BEGIN_SRC haskell
+(+) <$> (Just 2) <*> (Just 4)
+#+END_SRC
+
+The Python counterpart would only work if you wrote a curried ~plus~ function:
+
+#+BEGIN_SRC python
+  def plus(a):
+      def inner_plus(b):
+	  return a + b
+      return inner_plus
+
+  Just(2).fmap(plus).app(Just(4))
+#+END_SRC
 
 * Installation
 To install, navigate to the root directory and run:
@@ -9,6 +54,7 @@ pip3 install .
 #+END_SRC
 
 * Usage
+** IO
 ** Maybe
 Uses classes ~Just~ and ~Nothing~. ~return~ can be used via  ~Maybe.lift~. 
 
