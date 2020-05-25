@@ -1,9 +1,19 @@
 * Monads
-An implementation of several monads in Python. 
+An implementation of several functors, applicative functors, and
+monads in Python.
 
-They aren't very useful because there's no do-notation so ~lambda~ and
-~bind~ must be used instead. Python's strict evaluation also makes it
-difficult to write a monad without it running immediately. For
+Each supported monad has a ~bind~ method, ~lift~ method (like
+~return~), ~app~ method (like ~<*>~), and an ~fmap~ method. Also for monads
+that have helper functions I've included a few of them too (such as
+~local~ for the Reader monad).
+
+This code takes a little effort to use in real-world code for a few reasons.
+
+First, there's no do-notation so ~lambda~  and
+~bind~ must be used instead. 
+
+Second, Python's eager evaluation makes it
+cumbersome to write a monad without it running immediately. For
 example, to make a IO action that takes input and adds an exclaimation
 point, you can't assign it to a variable.
 
@@ -13,14 +23,14 @@ point, you can't assign it to a variable.
 #+END_SRC
 
 This happens even if the ~run()~ call is removed -- if that is missing it will run
-each action). For the IO monad this is because bind is
+each action but the last). For the IO monad this is because bind is
 ~f(self.run()))~. Meaning the last in a chain of ~bind~ would never get
 ~run()~ called. But the ~bind~ chain would run, because Python eagerly evaluates.
 
 The code above will ask for input immediately, instead of creating an
 IO action that when run asks for input.
 
-You have to wrap it in a function.
+You'll have to wrap it in a function.
 
 #+BEGIN_SRC python
   def io_yell_input():
@@ -28,8 +38,8 @@ You have to wrap it in a function.
 	  .bind(lambda x: IO.lift(x + '!')).run()
 #+END_SRC
 
-Another issue is the lack of currying of functions (as a
-default). That makes Applicative Functors less useful. Here is a basic
+Third, the lack of curried functions in Python as a
+default makes Applicative Functors less useful. Here is a basic
 example of what you can do in Haskell:
 
 #+BEGIN_SRC haskell
@@ -55,6 +65,44 @@ pip3 install .
 
 * Usage
 ** IO
+The IO monad provides several helper functions:
+- io_print :: a -> IO ()
+  - Prints the given value (no added newline)
+- io_println :: a -> IO ()
+  - Prints the given value and adds a newline at the end
+- io_write :: Handle -> String -> IO ()
+  - Writes a string to a file handle
+- io_close :: Handle -> IO ()
+  - Closes a file handle
+- io_input :: IO String
+  - Asks for input from stdin (uses ~input()~)
+- io_open :: FilePath -> IOMode -> IO Handle
+  - where FilePath and IOMode = String
+  - Opens a file handle for a file at file path FilePath with IOMode
+    read/write permissions (uses ~open(...)~).
+
+Because Python uses eager evaluation, any IO action you create is run
+immediately. You can put the action in a function to delay its
+evaluation. Make sure to add a ~run()~ call to the end of your action
+when it is evaluated, otherwise the last IO action in the IO action
+will not be called. In Haskell you never have to run a ~run()~ function
+because the program is made up of a ~IO ()~ called ~main~ at the
+top-level. But this code doesn't enforce some sort of ~io_main~ that you
+must assign, instead you have to run the IO monad yourself.
+
+Below is a program that asks the user to enter text, and writes that
+text with an exclamation point into a file in the same directory
+called ~test_file.txt~.
+#+BEGIN_SRC python
+  from monad.io import io_print, io_close, io_write, io_open, io_input
+
+  io_print('Enter some text: ') \
+  .then(io_input()) \
+      .bind(lambda text: io_open('test_file.txt', 'w') \
+	    .bind(lambda handle: io_write(handle, text + '!') \
+		  .then(io_close(handle)) \
+		  .then(io_print('Done')))).run()
+#+END_SRC
 ** Maybe
 Uses classes ~Just~ and ~Nothing~. ~return~ can be used via  ~Maybe.lift~. 
 

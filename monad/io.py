@@ -59,19 +59,19 @@ class IOClose(IO):
 
 def io_print(x):
     '''
-    io_print :: a -> IO a
+    io_print :: a -> IO ()
     '''
     return IOOutput(x, None)
 
 def io_println(x):
     '''
-    io_println :: a -> IO a
+    io_println :: a -> IO ()
     '''
     return IOOutput(x + '\n', None)
         
 def io_write(handle, x):
     '''
-    io_write :: Handle -> a -> IO a
+    io_write :: Handle -> a -> IO ()
     '''
     return IOOutput(x, handle)
 
