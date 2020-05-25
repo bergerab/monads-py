@@ -1,0 +1,45 @@
+* Monads
+An implementation of several monads in Python. Below is an overview of
+each and their usage.
+
+* Installation
+To install, navigate to the root directory and run:
+#+BEGIN_SRC shell
+pip3 install .
+#+END_SRC
+
+* Usage
+** Maybe
+Uses classes ~Just~ and ~Nothing~. ~return~ can be used via  ~Maybe.lift~. 
+
+Below is an example program that takes two integers (~x~ and ~y~) from the console
+and adds them (~x~ + ~y~). If the user gives non-integers it will continue to ask
+until an integer is given.
+
+#+BEGIN_SRC python
+  from monad.maybe import Maybe, Just, Nothing
+
+  def lift_input(prompt):
+      text = input(prompt)
+      if text:
+	  return Just(text)
+      return Nothing()
+
+  def try_parse_int(s):
+      try:
+	  return Just(int(s))
+      except ValueError:
+	  return Nothing()
+
+  def input_int(prompt):
+      m = lift_input(prompt).bind(try_parse_int)
+      if isinstance(m, Nothing):
+	  return input_int(prompt)
+      return m
+
+  input_int('X = ') \
+      .bind(lambda x: input_int('Y = ').bind(lambda y: Maybe.lift(x + y))) \
+      .fmap(lambda sum: print('X + Y = ' + str(sum)))
+#+END_SRC
+** Either
+** Reader

@@ -4,7 +4,7 @@ with open("README.org", "r") as fh:
     long_description = fh.read()
 
 setuptools.setup(
-    name="monads",
+    name="monad",
     version="0.0.1",
     author="Adam Berger",
     author_email="bergerab@icloud.com",
@@ -13,5 +13,4 @@ setuptools.setup(
     long_description_content_type="text/org",
     url="https://github.com/bergerab/monads-py",
     packages=setuptools.find_packages(),
-    python_requires='>=3.6',
-)
+    python_requires='>=3.6')
