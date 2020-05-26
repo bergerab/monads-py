@@ -1,12 +1,12 @@
 * Monads
-An implementation of several functors, applicative functors, and
-monads in Python. The implemented monads include:
+An implementation of several monads in Python (along with their functors and
+applicative functors). The implemented monads include:
 
 - [X] Identity
 - [X] IO
 - [X] Maybe
 - [X] Either
-- [ ] List
+- [X] List
 - [X] Reader
 - [ ] Writer
 - [ ] State
@@ -80,7 +80,16 @@ pip3 install .
 
 * Usage
 ** Identity
+Functions
+- ~identity.get()~ extracts the value from the monad.
+
 A pretty useless monad especially in Python.
+
+If you are trying to turn a non-monadic implementation into a monadic
+one, one way of doing that is to start with using the identity monad
+(this will force you to add in ~lift(x)~ and ~bind(f)~ calls), then switch
+to a monad that is useful to your problem (and finally remove the
+redundant code that the monad already is handling for you).
 
 Here is an example of adding two numbers inside of the Identity monad:
 #+BEGIN_SRC python
@@ -93,6 +102,8 @@ And using it as an applicative:
 #+BEGIN_SRC python
   Identity.lift(lambda x: x + 2).app(Identity.lift(4)).fmap(lambda x: print(x))
 #+END_SRC
+These examples can be found in ~examples/identity.py~.
+
 ** IO
 The IO monad provides several helper functions:
 - ~io_print~ :: a -> IO ()
@@ -134,6 +145,8 @@ called ~test_file.txt~.
 		  .then(io_close(handle)) \
 		  .then(io_print('Done')))).run()
 #+END_SRC
+This examples can be found in the file ~examples/io.py~.
+
 ** Maybe
 Functions
 - ~Just(x)~ specifies a Maybe that has a value
@@ -175,7 +188,7 @@ continues in a ~Right(x)~ value.
       .bind(lambda x: input_int('Y = ').bind(lambda y: Maybe.lift(x + y))) \
       .fmap(lambda sum: print('X + Y = ' + str(sum)))
 #+END_SRC
-You can run this example from the repo in the file ~examples/maybe.py~.
+This example can be found in ~examples/maybe.py~.
 
 ** Either
 The Either monad indicates successful computations with a ~Right~ value
@@ -188,6 +201,8 @@ Functions
   ~Right(x)~)
 - ~Right(x)~ indicates a successful computation yielding a value ~x~
 - ~Left(x)~ indicates an error that yieled a value ~x~
+- ~either.get()~ extracts the value from the Either monad (works for
+  both ~Right(x)~ and ~Left(x)~)
 
 #+BEGIN_SRC python
 from monad.either import Either, Left, Right
@@ -212,8 +227,10 @@ if __name__ == '__main__':
             safe_div(42, i).bind(lambda v: print('42 / %s = %s' % (i, v))))
    if (isinstance(e, Left)):
        print('The Either monad indicated an error: ', end='')
-       print(e.x)
+       print(e.get())
 #+END_SRC
+This example can be found in ~examples/either.py~.
+
 ** Reader
 Functions
 - ~Reader.ask()~ creates a new reader that gets the environment
@@ -354,3 +371,55 @@ it to yield a value:
 					 App(App(Sym('*'), Sym('y')), Sym('y'))),
 		  App(Sym('sqrt'), Sym('squaredSum'))))).eval().run(DEFAULT_ENVIRONMENT)
 #+END_SRC
+
+** List
+The List monad is useful when doing computations over lists that may
+or may not yield more than one result. The ~bind~ operator is a ~flatMap~.
+
+Functions:
+- ~list.get()~ extracts the Python list from the List monad
+- ~List.lift(x)~ same as ~List([x])~
+
+Below is an example of computing all right triangles that have lengths
+1 to ~max~ (where ~max~ is some number given by the user) that have
+integer hypotenuses. Is it useful? I'm not sure. But it demonstrates
+the List monad.
+
+This example also uses the Either monad to get an integer from the
+user, and to validate that it is within 10 and 1000.
+
+#+BEGIN_SRC python
+import math
+
+from monad.list import List
+from monad.either import Left, Right
+from either import safe_input_int
+
+def validate_max(v):
+    return Left('The max triangle side length must be between 10 and 1000.') if 10 > v < 1000 else Right(v)
+
+class Answer:
+    def __init__(self, a, b, c):
+        self.a = a
+        self.b = b
+        self.c = c
+        self.is_integer = c % 1 == 0
+
+    def __repr__(self):
+        return '%s^2 + %s^2 = %s^2' % (self.a, self.b, int(self.c) if self.is_integer else self.c)
+
+if __name__ == '__main__':
+    # computes all right triangles with lengths from 1 to the user inputed max length
+    # where the hypotenuse is an integer
+    v = safe_input_int('Enter a max triangle side length [10 - 1000]: ') \
+        .bind(validate_max) \
+        .bind(lambda max: \
+              Right(List(range(1, max)).bind(lambda a: \
+                    List(range(1, max)).bind(lambda b: List.lift(Answer(a, b, math.sqrt(a*a + b*b)))) \
+                            .filter(lambda ans: ans.is_integer))))
+    if isinstance(v, Left):
+        print('An error has occured: ' + v.get())
+    else:
+        print('\n'.join(map(repr, v.get().get())))
+#+END_SRC
+This example can be found in ~examples/list.py~.

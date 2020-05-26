@@ -32,6 +32,13 @@ class Either(Monad):
             return f(self.x)
         return self
 
+    def get(self):
+        '''
+        Extracts the value from the monad
+        '''
+        return self.x
+    
+
 class Left(Either): pass
 
 class Right(Either): pass

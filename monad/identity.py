@@ -16,3 +16,9 @@ class Identity(Monad):
 
     def app(self, other):
         return Identity.lift(self.x(other.x))
+
+    def get(self):
+        '''
+        Extracts the value from the monad
+        '''
+        return self.x
