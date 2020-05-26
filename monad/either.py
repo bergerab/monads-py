@@ -1,4 +1,4 @@
-from monad import Monad
+from .monad import Monad
 
 class Either(Monad):
     def __init__(self, x):
@@ -21,7 +21,7 @@ class Either(Monad):
         <*> :: Either a (b -> c) -> Either a b -> Either a c
         '''
         if isinstance(self, Right):
-            return Right(other.fmap(self.x))
+            return other.fmap(self.x)
         return self
 
     def bind(self, f):

@@ -5,7 +5,7 @@ monads in Python. The implemented monads include:
 - [X] Identity
 - [X] IO
 - [X] Maybe
-- [ ] Either
+- [X] Either
 - [ ] List
 - [X] Reader
 - [ ] Writer
@@ -144,6 +144,12 @@ Below is an example program that takes two integers (~x~ and ~y~) from the conso
 and adds them (~x~ + ~y~). If the user gives non-integers it will continue to ask
 until an integer is given.
 
+Below is an example that askes the user to input a number for X in the
+equation ~42 / X = Y~. If the user doesn't input a number, a ~Left(x)~
+value is produced indicating an error. If the user chooses to input ~0~,
+a different ~Left(x)~ value is produced. Otherwise the computation
+continues in a ~Right(x)~ value.
+
 #+BEGIN_SRC python
   from monad.maybe import Maybe, Just, Nothing
 
@@ -172,6 +178,42 @@ until an integer is given.
 You can run this example from the repo in the file ~examples/maybe.py~.
 
 ** Either
+The Either monad indicates successful computations with a ~Right~ value
+and errors with its ~Left~ value. It is similar to the Maybe monad, but
+instead of ~Nothing~ carrying no information, ~Left(x)~ propagates
+information along with the error.
+
+Functions
+- ~Either.lift(x)~ lifts a value into the Either monad (same as
+  ~Right(x)~)
+- ~Right(x)~ indicates a successful computation yielding a value ~x~
+- ~Left(x)~ indicates an error that yieled a value ~x~
+
+#+BEGIN_SRC python
+from monad.either import Either, Left, Right
+
+def safe_div(n, d):
+    if d == 0:
+        return Left('Division by zero')
+    return Right(n / d)
+
+def safe_parse_int(s):
+    try:
+        return Right(int(s))
+    except ValueError:
+        return Left('Input "%s" could not be interpreted as an integer.' % s)
+
+def safe_input_int(prompt):
+    s = input(prompt)
+    return safe_parse_int(s)
+    
+if __name__ == '__main__':
+   e = safe_input_int('Enter a number to divide 42 by: ').bind(lambda i: \
+            safe_div(42, i).bind(lambda v: print('42 / %s = %s' % (i, v))))
+   if (isinstance(e, Left)):
+       print('The Either monad indicated an error: ', end='')
+       print(e.x)
+#+END_SRC
 ** Reader
 Functions
 - ~Reader.ask()~ creates a new reader that gets the environment
