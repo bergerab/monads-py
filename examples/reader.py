@@ -5,7 +5,7 @@ from monad.reader import *
 class Expr: pass
 class Unit(Expr):
     '''
-    Indicates no value
+    Indicates an empty value
     '''
     def eval(self):
         return Reader.lift(UnitVal())

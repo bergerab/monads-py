@@ -15,6 +15,9 @@ applicative functors). The implemented monads include:
 The idea is to keep the semantics of these monads as equivalent as
 possible to Haskell's (granted they are in Python after all).
 
+This code doesn't address creating new monads, or combining monads
+(transformers).
+
 Each supported monad has a ~bind~ method, ~lift~ method (like
 ~return~), ~app~ method (like ~<*>~), and an ~fmap~ method. Also for monads
 that have helper functions I've included a few of them too (such as
@@ -254,7 +257,7 @@ readers that are created below that one).
 class Expr: pass
 class Unit(Expr):
     '''
-    Indicates no value
+    Indicates an empty value
     '''
     def eval(self):
         return Reader.lift(UnitVal())
@@ -379,6 +382,8 @@ or may not yield more than one result. The ~bind~ operator is a ~flatMap~.
 Functions:
 - ~list.get()~ extracts the Python list from the List monad
 - ~List.lift(x)~ same as ~List([x])~
+- ~list.filter(f)~ runs a predicate function on each element in the
+  list, creates a new list with all items that were true.
 
 Below is an example of computing all right triangles that have lengths
 1 to ~max~ (where ~max~ is some number given by the user) that have
@@ -409,8 +414,6 @@ class Answer:
         return '%s^2 + %s^2 = %s^2' % (self.a, self.b, int(self.c) if self.is_integer else self.c)
 
 if __name__ == '__main__':
-    # computes all right triangles with lengths from 1 to the user inputed max length
-    # where the hypotenuse is an integer
     v = safe_input_int('Enter a max triangle side length [10 - 1000]: ') \
         .bind(validate_max) \
         .bind(lambda max: \
@@ -423,3 +426,8 @@ if __name__ == '__main__':
         print('\n'.join(map(repr, v.get().get())))
 #+END_SRC
 This example can be found in ~examples/list.py~.
+** Writer
+
+#+BEGIN_SRC python
+
+#+END_SRC
