@@ -1,4 +1,4 @@
-from monad import Monad
+from .monad import Monad
 
 class Reader(Monad):
     '''
@@ -15,7 +15,8 @@ class Reader(Monad):
         '''
         return Reader(lambda e: x)
 
-    def ask(self):
+    @staticmethod
+    def ask():
         '''
         ask :: Reader e a -> Reader e e
         Makes a reader that gives the environment
@@ -45,8 +46,3 @@ class Reader(Monad):
         <*> :: Reader e (a -> b) -> Reader e a -> Reader e b
         '''
         return Reader(lambda e: self.run(e)(other.run(e)))
-
-def test_reader():
-    x = Reader() \
-        .run({ 'lives': 1 })
-    print(x)

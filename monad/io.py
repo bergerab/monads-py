@@ -1,5 +1,5 @@
-from monad import Monad
-from unit import Unit
+from .monad import Monad
+from .unit import Unit
 
 class IO(Monad):
     def __init__(self, x):

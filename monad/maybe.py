@@ -1,4 +1,4 @@
-from monad import Monad
+from .monad import Monad
 
 class Maybe(Monad):
     '''
@@ -43,6 +43,19 @@ class Just(Maybe):
     def __init__(self, x):
         self.x = x
 
+class MaybeT:
+    def __init__(self, m):
+        self.m = m
+
+    def run(self):
+        '''
+        run :: m (Maybe a) -> a
+        '''
+        pass
+
+    def bind(self, f):
+        pass
+    
 def test_maybe():
     Just(lambda x: x + 2) \
         .app(Just(3)) \

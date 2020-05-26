@@ -1,6 +1,19 @@
 * Monads
 An implementation of several functors, applicative functors, and
-monads in Python.
+monads in Python. The implemented monads include:
+
+- [X] Identity
+- [X] IO
+- [X] Maybe
+- [ ] Either
+- [ ] List
+- [X] Reader
+- [ ] Writer
+- [ ] State
+- [ ] Continuation
+
+The idea is to keep the semantics of these monads as equivalent as
+possible to Haskell's (granted they are in Python after all).
 
 Each supported monad has a ~bind~ method, ~lift~ method (like
 ~return~), ~app~ method (like ~<*>~), and an ~fmap~ method. Also for monads
@@ -64,22 +77,38 @@ pip3 install .
 #+END_SRC
 
 * Usage
+** Identity
+A pretty useless monad especially in Python.
+
+Here is an example of adding two numbers inside of the Identity monad:
+#+BEGIN_SRC python
+  Identity.lift(3).bind(lambda x:
+			Identity.lift(2).bind(lambda y: Identity.lift(x + y))).fmap(lambda x: print x)
+#+END_SRC
+
+And using it as an applicative:
+
+#+BEGIN_SRC python
+  Identity.lift(lambda x: x + 2).app(Identity.lift(4)).fmap(lambda x: print(x))
+#+END_SRC
 ** IO
 The IO monad provides several helper functions:
-- io_print :: a -> IO ()
+- ~io_print~ :: a -> IO ()
   - Prints the given value (no added newline)
-- io_println :: a -> IO ()
+- ~io_println~ :: a -> IO ()
   - Prints the given value and adds a newline at the end
-- io_write :: Handle -> String -> IO ()
+- ~io_write~ :: Handle -> String -> IO ()
   - Writes a string to a file handle
-- io_close :: Handle -> IO ()
+- ~io_close~ :: Handle -> IO ()
   - Closes a file handle
-- io_input :: IO String
+- ~io_input~ :: IO String
   - Asks for input from stdin (uses ~input()~)
-- io_open :: FilePath -> IOMode -> IO Handle
+- ~io_open~ :: FilePath -> IOMode -> IO Handle
   - where FilePath and IOMode = String
   - Opens a file handle for a file at file path FilePath with IOMode
     read/write permissions (uses ~open(...)~).
+- ~io_action.then(m)~ same as ~io_action.bind(lambda _: m)~
+  - This is present for all monads
 
 Because Python uses eager evaluation, any IO action you create is run
 immediately. You can put the action in a function to delay its
@@ -104,7 +133,10 @@ called ~test_file.txt~.
 		  .then(io_print('Done')))).run()
 #+END_SRC
 ** Maybe
-Uses classes ~Just~ and ~Nothing~. ~return~ can be used via  ~Maybe.lift~. 
+Functions
+- ~Just(x)~ specifies a Maybe that has a value
+- ~Nothing()~ a Maybe with no value
+- ~Maybe.lift(x)~ equivalent to ~Just(x)~
 
 Below is an example program that takes two integers (~x~ and ~y~) from the console
 and adds them (~x~ + ~y~). If the user gives non-integers it will continue to ask
