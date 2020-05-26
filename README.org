@@ -26,7 +26,9 @@ First, there's no do-notation so ~lambda~  and
 ~bind~ must be used instead. 
 
 Second, Python's eager evaluation makes it
-cumbersome to write a monad without it running immediately. For
+cumbersome to write a monad without it running immediately. This isn't
+a problem for all monads, but several, like IO have this issue
+(whereas the Reader doesn't have this problem). For
 example, to make a IO action that takes input and adds an exclaimation
 point, you can't assign it to a variable.
 
@@ -167,5 +169,146 @@ until an integer is given.
       .bind(lambda x: input_int('Y = ').bind(lambda y: Maybe.lift(x + y))) \
       .fmap(lambda sum: print('X + Y = ' + str(sum)))
 #+END_SRC
+You can run this example from the repo in the file ~examples/maybe.py~.
+
 ** Either
 ** Reader
+Functions
+- ~Reader.ask()~ creates a new reader that gets the environment
+- ~reader.local(f)~ creates a new reader, that maps function ~f~ before
+  running
+- ~Reader.lift(x)~ creates a reader that ignores the environment, and
+  yields the value ~x~ (equivalent to ~return~)
+
+The Reader monad can be used to implicitly propagate a symbol table in
+an interpreter. In the ~examples/reader.py~ file there is a complete
+toy interpreter that works with the Reader monad.
+
+The difference between using the reader monad and not is that the
+evaluation returns a ~Reader Environment Value~. That means after
+evaluating you have to call ~reader.run(env)~ and pass it an environment to
+start with. Lexical scoping can be accomplished with the
+~reader.local(f)~ function (it will extend the environment for all
+readers that are created below that one).
+
+#+BEGIN_SRC python
+class Expr: pass
+class Unit(Expr):
+    '''
+    Indicates no value
+    '''
+    def eval(self):
+        return Reader.lift(UnitVal())
+
+class Lit(Expr):
+    '''
+    A literal value (number, string, etc...)
+    '''
+    def __init__(self, val):
+        self.val = val
+        
+    def eval(self):
+        return Reader.lift(LitVal(self.val))
+
+class Sym(Expr):
+    '''
+    A symbol (used as identifiers for functions)
+    '''
+    def __init__(self, name):
+        self.name = name
+        
+    def eval(self):
+        return Reader.ask().bind(lambda env: Reader.lift(env.lookup(self.name)))
+
+class App(Expr):
+    '''
+    Function application (curried)
+    '''
+    def __init__(self, sym, expr):
+        self.sym = sym
+        self.expr = expr
+
+    def eval(self):
+        return \
+            self.sym.eval().bind(lambda f: \
+                self.expr.eval().bind(lambda v: \
+                                      Reader.lift(f(v))))
+
+class Let(Expr):
+    '''
+    Binds a name to a value, inside of the body
+    '''
+    def __init__(self, sym, expr, body):
+        self.sym = sym
+        self.expr = expr
+        self.body = body
+
+    def eval(self):
+        return \
+            self.expr.eval().bind(lambda v: \
+                self.body.eval().local(lambda env: \
+                    env.extend(self.sym, v)))
+
+class If(Expr):
+    '''
+    If predicate ~pred~ is truthy, evaluates ~then~ part, otherwise evaluates ~other~ part
+    '''
+    def __init__(self, pred, then, other):
+        self.pred = pred
+        self.then = then
+        self.other = other
+
+    def eval(self):
+        return self.pred.eval() \
+                     .bind(lambda v: \
+                        self.then.eval() if bool(v.val) else self.other.eval())
+#+END_SRC
+
+For this toy interpreter, there is a special Environment class (that
+serves as the symbol table). It is made pure so that the
+~reader.local(f)~ calls don't have side effects.
+
+#+BEGIN_SRC python
+class Environment:
+    '''
+    Pure lexical environment
+    '''
+    def __init__(self, env=None):
+        self.env = env if env else []
+
+    def extend(self, name, val):
+        return Environment(self.env + [[name, val]])
+
+    def lookup(self, name):
+        for sym, val in reversed(self.env):
+            if name == sym.name:
+                return val
+        raise Exception('Symbol %s not found in environment' % name)
+#+END_SRC
+
+The environment can be pre-loaded with built-in symbols. I have
+included a few to do basic math with:
+
+#+BEGIN_SRC python
+DEFAULT_ENVIRONMENT = Environment([
+    [Sym('+'), lambda x: lambda y: LitVal(x.val + y.val)],
+    [Sym('-'), lambda x: lambda y: LitVal(x.val - y.val)],
+    [Sym('*'), lambda x: lambda y: LitVal(x.val * y.val)],
+    [Sym('/'), lambda x: lambda y: LitVal(x.val / y.val)],
+    [Sym('sqrt'), lambda x: LitVal(math.sqrt(x.val))],    
+    [Sym('print'), lambda x: [print(x.val), UnitVal()][1]],
+    [Sym('input'), lambda x: [input(x.val), UnitVal()][1]],
+    [Sym('pi'), LitVal(math.pi)],
+])
+#+END_SRC
+
+Then a program can be written, evaluated, and the reader can be run on
+it to yield a value:
+
+#+BEGIN_SRC python
+  val = Let(Sym('x'), Lit(5),
+	  Let(Sym('y'), Lit(2),
+	      Let(Sym('squaredSum'), App(App(Sym('+'), App(App(Sym('*'), Sym('x')), Sym('x'))),
+					 App(App(Sym('*'), Sym('y')), Sym('y'))),
+		  App(Sym('sqrt'), Sym('squaredSum'))))).eval().run(DEFAULT_ENVIRONMENT)
+#+END_SRC
