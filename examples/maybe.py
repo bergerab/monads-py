@@ -18,6 +18,7 @@ def input_int(prompt):
         return input_int(prompt)
     return m
 
-input_int('X = ') \
-    .bind(lambda x: input_int('Y = ').bind(lambda y: Maybe.lift(x + y))) \
-    .fmap(lambda sum: print('X + Y = ' + str(sum)))
+if __name__ == '__main__':
+    input_int('X = ') \
+        .bind(lambda x: input_int('Y = ').bind(lambda y: Maybe.lift(x + y))) \
+        .fmap(lambda sum: print('X + Y = ' + str(sum)))
