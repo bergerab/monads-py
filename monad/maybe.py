@@ -39,26 +39,7 @@ class Maybe(Monad):
 
 class Nothing(Maybe):
     pass
+
 class Just(Maybe):
     def __init__(self, x):
         self.x = x
-
-class MaybeT:
-    def __init__(self, m):
-        self.m = m
-
-    def run(self):
-        '''
-        run :: m (Maybe a) -> a
-        '''
-        pass
-
-    def bind(self, f):
-        pass
-    
-def test_maybe():
-    Just(lambda x: x + 2) \
-        .app(Just(3)) \
-        .bind(lambda x: Just(str(x))) \
-        .bind(lambda x: Just(x + '!')) \
-        .fmap(lambda x: print(x))

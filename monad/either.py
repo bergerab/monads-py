@@ -1,4 +1,6 @@
-class Either:
+from monad import Monad
+
+class Either(Monad):
     def __init__(self, x):
         self.x = x
         
@@ -29,11 +31,7 @@ class Either:
         if isinstance(self, Right):
             return f(self.x)
         return self
-class Left(Either): pass
-class Right(Either): pass
 
-def test_either():
-    Right('asdf') \
-        .bind(lambda x: Either.lift(x + '!')) \
-        .bind(lambda x: Left('Error')) \
-        .fmap(lambda x: print(x))
+class Left(Either): pass
+
+class Right(Either): pass
