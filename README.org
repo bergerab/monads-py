@@ -8,7 +8,7 @@ applicative functors). The implemented monads include:
 - [X] Either
 - [X] List
 - [X] Reader
-- [ ] Writer
+- [X] Writer
 - [ ] State
 - [ ] Continuation
 
@@ -427,7 +427,76 @@ if __name__ == '__main__':
 #+END_SRC
 This example can be found in ~examples/list.py~.
 ** Writer
+Functions
+- ~Writer.lift(x[, w=[]])~ make a writer with value ~x~. Use ~w~ to specify
+  which monoid to use for the writer (works so long as ~w~ implements an
+  ~__add__~ with type ~w -> w -> w~)
+- ~Writer.tell(w)~ creates a writer that when run produces output w.
+- ~writer.wpass()~ has type ~Writer (a, w -> w) -> Writer a~. Takes a
+  writer that has a tuple value. The first is the value of the writer,
+  the second is a function to map over the output with. Same as
+  Haskell's ~pass~. Named ~wpass~ because ~pass~ is reserved in Python.
+- ~writer.censor(f)~ more ergonomic version of ~writer.wpass()~. Has the
+  type  ~Writer a -> (w -> w) -> Writer a~. Maps the function ~f~ over the
+  writer and returns a new writer that has been mapped.
+- ~writer.listen()~ has the type ~Writer a -> Writer (a, w)~. Where ~w~ is
+  the type of output (the moniod) in the writer. Used for accessing
+  the output value of the writer inside of a ~bind~.
+- ~writer.listens()~ maps over the monad's output value. Has the
+  type ~Writer a -> (w -> b) -> Writer (a, b)~ (again where ~w~ is the
+  type of the output in the writer).
 
+A writer can be used for logging values into a string or list to keep
+track of what is happening in a computation. You can also use it to do
+some analysis in a compiler. Below is an example of a tiny compiler
+that produces some language of only binary operator on numbers. The
+writer is used to count how many number literals are in the
+code.
 #+BEGIN_SRC python
+import math
 
+from monad.reader import *
+from monad.writer import Writer
+
+class Expr: pass
+class Num(Expr):
+    '''
+    A number
+    '''
+    def __init__(self, val):
+        self.val = val
+        
+    def gen(self):
+        return Writer.lift(repr(self.val), w=1)
+class Sym(Expr):
+    '''
+    A symbol (used as identifiers)
+    '''
+    def __init__(self, name):
+        self.name = name
+        
+    def gen(self):
+        return Writer.lift(str(self.name), w=0)
+class Op(Expr):
+    '''
+    A binary operator
+    '''
+    def __init__(self, sym, a1, a2):
+        self.sym = sym
+        self.a1 = a1
+        self.a2 = a2
+
+    def gen(self):
+        return self.a1.gen().bind(lambda v1: \
+            self.sym.gen().bind(lambda v2: \
+                self.a2.gen().bind(lambda v3: \
+                    Writer.lift('(%s %s %s)' % (v1, v2, v3), w=0))))
+
+if __name__ == '__main__':
+    v = Op(Sym('+'), Op(Sym('-'), Num(1), Op(Sym('*'), Num(2), Num(8))), Lit(32)).gen().run()
+    assert v[0] == '((1 - (2 * 8)) + 32)' # produces the correct output
+    assert v[1] == 4 # it counted that there were 4 numbers correctly
 #+END_SRC
+This example can be found in ~examples/writer.py~.
+** State
+** Continuation

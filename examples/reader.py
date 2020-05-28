@@ -85,9 +85,6 @@ class LitVal(Val):
         self.val = val
 
 class Environment:
-    '''
-    Pure lexical environment
-    '''
     def __init__(self, env=None):
         self.env = env if env else []
 
