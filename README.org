@@ -453,9 +453,6 @@ that produces some language of only binary operator on numbers. The
 writer is used to count how many number literals are in the
 code.
 #+BEGIN_SRC python
-import math
-
-from monad.reader import *
 from monad.writer import Writer
 
 class Expr: pass

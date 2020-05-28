@@ -1,6 +1,3 @@
-import math
-
-from monad.reader import *
 from monad.writer import Writer
 
 class Expr: pass
@@ -35,10 +32,7 @@ class Op(Expr):
         return self.a1.gen().bind(lambda v1: \
             self.sym.gen().bind(lambda v2: \
                 self.a2.gen().bind(lambda v3: \
-                    Writer.lift('(%s %s %s)' % (v1, v2, v3), w=0)
-                )
-            )
-        )
+                    Writer.lift('(%s %s %s)' % (v1, v2, v3), w=0))))
 
 if __name__ == '__main__':
     v = Op(Sym('+'), Op(Sym('-'), Lit(1), Op(Sym('*'), Lit(2), Lit(8))), Lit(32)).gen().run()
