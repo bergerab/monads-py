@@ -9,7 +9,7 @@ class Lit(Expr):
         self.val = val
         
     def gen(self):
-        return Writer.lift(repr(self.val), w=1)
+        return Writer.lift(repr(self.val), w=1) # same as "writer (val, 1)" in Haskell -- could be written using "tell" too
 class Sym(Expr):
     '''
     A symbol (used as identifiers for functions)
