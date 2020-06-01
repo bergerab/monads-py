@@ -16,6 +16,19 @@ class State(Monad):
     def lift(x):
         return State(lambda s: (x, s))
 
+    def fmap(self, f):
+        def run(s):
+            (_a, _s) = self.run(s)
+            return (f(_a), _s)
+        return State(run)
+
+    def app(self, other):
+        def run(s):
+            (_f, _s1) = self.run(s)
+            (_a, _s2) = other.run(_s1)
+            return (_f(_a), _s2)
+        return State(run)
+
     def bind(self, f):
         def run(s):
             (_a, _s) = self.run(s)

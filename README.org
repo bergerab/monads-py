@@ -9,7 +9,7 @@ applicative functors). The implemented monads include:
 - [X] List
 - [X] Reader
 - [X] Writer
-- [ ] State
+- [X] State
 - [ ] Continuation
 
 The idea is to keep the semantics of these monads as equivalent as
@@ -544,3 +544,8 @@ if __name__ == '__main__':
 #+END_SRC
 
 ** Continuation
+
+
+#+BEGIN_SRC python
+
+#+END_SRC

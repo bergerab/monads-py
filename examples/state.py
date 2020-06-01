@@ -33,3 +33,4 @@ if __name__ == '__main__':
         s += s
         return s
     '''
+    assert State.lift(lambda x: x + 1).app(State.lift(4)).run(0)[0] == 5
